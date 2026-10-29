@@ -1,0 +1,9 @@
+Copyright (c) 2026 NOATY. All rights reserved.
+
+The public source is provided for viewing. No license to modify or redistribute
+NOATY's source code is granted. You may download and run the published application
+for your own use. Other permissions must be obtained from the copyright holder.
+
+Third-party components retain their own licenses. WARDOGS game imagery, names,
+and notification text remain the property of their respective rights holders.
+See THIRD_PARTY.md. This is an unofficial community tool.

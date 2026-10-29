@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OBS Highlight Finder</title>
+<style>
+:root{color-scheme:dark;font-family:Segoe UI,Arial,sans-serif;background:#10151e;color:#eef3fc}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:48px auto;padding:0 28px}header{display:flex;align-items:center;gap:16px}.logo{background:#adf5c5;color:#112c1c;font-size:28px;border-radius:16px;padding:12px 18px}h1{font-size:32px;margin:0 0 5px;letter-spacing:-1px}p{color:#aebbd0;line-height:1.6;margin:8px 0 20px}.badge{font-size:12px;color:#adf5c5;letter-spacing:2px}.drop{margin-top:30px;border:2px dashed #41516a;border-radius:18px;padding:35px;text-align:center;background:#182130}.drop.over{border-color:#adf5c5;background:#223c32}button,.pick{display:inline-block;border:1px solid #455570;background:#253247;color:#eef3fc;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;text-decoration:none}button:hover,.pick:hover{background:#354864}.primary{background:#adf5c5;color:#102919;border:0;font-weight:700}.primary:hover{background:#cffbdf}button:disabled{opacity:.4;cursor:default}input[type=file]{max-width:100%;margin-top:16px}input[type=number]{width:68px;background:#10151e;color:white;border:1px solid #455570;border-radius:6px;padding:8px}#status{padding:18px 0;white-space:pre-line;line-height:1.6;color:#bfcee4}.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}.spacer{flex:1}table{width:100%;border-collapse:collapse;background:#182130;border-radius:12px;overflow:hidden}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid #2b374b}th{font-size:12px;color:#aebbd0;text-transform:uppercase;letter-spacing:1px}td.time{font-family:Consolas,monospace;color:#adf5c5;white-space:nowrap}td.title{overflow-wrap:anywhere}video{width:100%;max-height:430px;margin-top:22px;background:black;border-radius:12px}.note{font-size:13px}details{margin-top:28px;padding:20px;background:#182130;border-radius:12px}summary{cursor:pointer;font-weight:600}li{margin:12px 0;color:#c2cde0;line-height:1.5}#results[hidden],video[hidden]{display:none}.tablewrap{overflow-x:auto}footer{font-size:12px;color:#7e91ad;margin:28px 0}a{color:#adf5c5}@media(max-width:650px){main{margin:24px auto;padding:0 16px}h1{font-size:25px}.drop{padding:24px 12px}td,th{padding:10px}.logo{display:none}}
+</style>
+<main><header><div class="logo">⚑</div><div><div class="badge">LOCAL • OFFLINE • PRIVATE</div><h1>OBS Highlight Finder</h1><p style="margin:0">Your detected highlights, ready to review.</p></div></header>
+<section class="drop" id="drop"><h2 style="margin:0 0 8px">Drop your marked recording here</h2><p>Reads saved chapter markers from MP4 and MOV. Your video stays on this PC.</p><label class="pick primary" for="file">Choose recording</label><br><input id="file" type="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" aria-label="Choose OBS recording"></section>
+<div id="status" role="status" aria-live="polite">Ready when you are. Stop your recording in OBS before opening it here.</div>
+<section id="results" hidden><div class="toolbar"><label>Lead-in <input id="lead" type="number" min="0" max="600" value="10" step="1"> seconds</label><span class="spacer"></span><button id="copy">Copy list</button><button id="save">Save .txt</button><button id="csv">Save .csv</button></div><p class="note">“Marker time” is the saved OBS timestamp. “Start watching” includes the lead-up. Times are HH:MM:SS.mmm (milliseconds, not frames). A marker at 00:00 may be OBS’s automatic recording-start chapter.</p><div class="tablewrap"><table><thead><tr><th>#</th><th>Chapter</th><th>Marker time</th><th>Start watching</th><th>Preview</th></tr></thead><tbody id="rows"></tbody></table></div><video id="video" controls preload="metadata" hidden></video><p id="previewnote" class="note"></p></section>
+<details><summary>Optional: manually mark future recordings in OBS</summary><ol><li>In OBS, open <b>Settings → Output → Recording</b> and set Recording Format to <b>Hybrid MP4</b> (Hybrid MOV also works).</li><li>Open <b>Settings → Hotkeys</b>, find <b>Add chapter marker</b>, and assign an unused key.</li><li>Press that key after each kill or highlight while recording. Stop the recording normally so OBS saves the chapters.</li><li>Open the finished recording here. In Filmora, use these times on the original, untrimmed clip placed at the start of your timeline. Add Filmora markers before cutting or rearranging.</li></ol><p class="note">This app reads markers already saved by OBS; it does not listen for keys itself. It cannot recover past key presses from recordings without saved chapters. Browser playback depends on the video codec; timestamp extraction does not.</p><a href="https://obsproject.com/kb/hybrid-mp4" target="_blank" rel="noreferrer">OBS chapter-marker documentation</a></details><footer>No installation. No uploads. No changes to the original recording.</footer></main>
+<script>
+/* Local, bounded MP4/MOV chapter reader. No network access or video rewriting. */
+async function readChapters(file) {
+  const decoder = new TextDecoder();
+  const read = async (p, n) => {
+    if (!Number.isSafeInteger(p) || p < 0 || n < 0 || p + n > file.size || n > 128 * 1024 * 1024) throw Error('Invalid or oversized recording metadata.');
+    return new DataView(await file.slice(p, p + n).arrayBuffer());
+  };
+  const str = (v,p,n) => decoder.decode(new Uint8Array(v.buffer,v.byteOffset+p,n));
+  const big = (v,p) => { const x=Number(v.getBigUint64(p)); if(!Number.isSafeInteger(x)) throw Error('File offset is too large.'); return x; };
+  const boxes = (v, start=0, end=v.byteLength) => {
+    const out=[];
+    for(let p=start;p<end;) {
+      if(p+8>end) throw Error('Incomplete recording metadata.');
+      let n=v.getUint32(p), h=8;
+      if(n===1) {if(p+16>end) throw Error('Incomplete box.'); n=big(v,p+8);h=16;}
+      if(n===0)n=end-p;
+      if(n<h || p+n>end)throw Error('Damaged recording metadata.');
+      out.push({type:str(v,p+4,4),p:p+h,end:p+n});p+=n;
+    } return out;
+  };
+  const child=(v,b,type)=>boxes(v,b.p,b.end).find(x=>x.type===type);
+  let movies=[];
+  for(let p=0, count=0;p<file.size;) {
+    if(++count>100000)throw Error('Too many file sections.');
+    const v=await read(p,Math.min(16,file.size-p));
+    if(v.byteLength<8)throw Error('This file is incomplete or is not an MP4/MOV recording.');
+    let n=v.getUint32(0),h=8;
+    if(n===1){if(v.byteLength<16)throw Error('Incomplete file.');n=big(v,8);h=16;}
+    if(n===0)n=file.size-p;
+    if(n<h || p+n>file.size)throw Error('This file is incomplete or is not an MP4/MOV recording.');
+    if(str(v,4,4)==='moov')movies.push({p:p+h,n:n-h});
+    p+=n;
+  }
+  if(!movies.length)throw Error('No finalized MP4/MOV metadata found. Stop the OBS recording normally before opening it here.');
+  for(const movie of movies.reverse()) {
+    const v=await read(movie.p,movie.n), root={p:0,end:v.byteLength};
+    const tracks=boxes(v).filter(x=>x.type==='trak'), refs=new Set();
+    for(const t of tracks) {
+      const r=child(v,t,'tref'),c=r&&child(v,r,'chap');
+      if(c)for(let p=c.p;p+4<=c.end;p+=4)refs.add(v.getUint32(p));
+    }
+    for(const t of tracks) {
+      const tk=child(v,t,'tkhd');if(!tk)continue;
+      const id=v.getUint32(tk.p+(v.getUint8(tk.p)===1?20:12));
+      if(!refs.has(id))continue;
+      const md=child(v,t,'mdia'), mh=md&&child(v,md,'mdhd'), mi=md&&child(v,md,'minf'), st=mi&&child(v,mi,'stbl');
+      if(!mh||!st)continue;
+      const scale=v.getUint32(mh.p+(v.getUint8(mh.p)===1?20:12));
+      if(!scale)throw Error('Invalid chapter timescale.');
+      const sz=child(v,st,'stsz'), sc=child(v,st,'stsc'), ts=child(v,st,'stts'), co=child(v,st,'co64')||child(v,st,'stco');
+      if(!sz||!sc||!ts||!co)continue;
+      const count=v.getUint32(sz.p+8),fixed=v.getUint32(sz.p+4);
+      if(count===0)continue;
+      if(count>100000)throw Error('Too many chapters.');
+      const entries=(b,width,offset=8)=>{const n=v.getUint32(b.p+4);if(n>1000000||b.p+offset+n*width>b.end)throw Error('Invalid chapter table.');return n;};
+      if(!fixed && sz.p+12+count*4>sz.end)throw Error('Invalid chapter sizes.');
+      let times=[], tick=0;
+      for(let i=0,n=entries(ts,8);i<n;i++) {
+        const num=v.getUint32(ts.p+8+i*8),dur=v.getUint32(ts.p+12+i*8);
+        if(times.length+num>count)throw Error('Invalid chapter timing.');
+        for(let j=0;j<num;j++){times.push(tick/scale);tick+=dur;}
+      }
+      if(times.length!==count)throw Error('Incomplete chapter timing.');
+      let map=[];
+      for(let i=0,n=entries(sc,12);i<n;i++)map.push({first:v.getUint32(sc.p+8+i*12),num:v.getUint32(sc.p+12+i*12)});
+      if(!map.length||map[0].first!==1||map.some((x,i)=>!x.num||(i&&x.first<=map[i-1].first)))throw Error('Invalid chapter chunks.');
+      let result=[],sample=0,m=0;
+      for(let i=0,n=entries(co,co.type==='co64'?8:4);i<n&&sample<count;i++) {
+        while(m+1<map.length&&map[m+1].first<=i+1)m++;
+        let pos=co.type==='co64'?big(v,co.p+8+i*8):v.getUint32(co.p+8+i*4);
+        if(map[m].num>count-sample)throw Error('Invalid chapter sample count.');
+        for(let j=0;j<map[m].num;j++,sample++) {
+          const size=fixed||v.getUint32(sz.p+12+sample*4);
+          if(size<2||size>1048576)throw Error('Invalid chapter text size.');
+          const data=await read(pos,size),len=data.getUint16(0);
+          if(len+2>size)throw Error('Incomplete chapter title.');
+          result.push({seconds:times[sample],title:str(data,2,len)||'Unnamed marker'});pos+=size;
+        }
+      }
+      if(sample!==count)throw Error('Missing chapter data.');
+      return result;
+    }
+    const ud=child(v,root,'udta'),cp=ud&&child(v,ud,'chpl');
+    if(cp){let p=cp.p+4;if(v.getUint8(cp.p)===1)p+=4;const count=v.getUint8(p++),out=[];for(let i=0;i<count;i++){const seconds=big(v,p)/1e7;p+=8;const len=v.getUint8(p++);if(p+len>cp.end)throw Error('Invalid chapter list.');out.push({seconds,title:str(v,p,len)});p+=len;}if(out.length)return out;}
+  }
+  return [];
+}
+function timestamp(seconds) {
+  const ms=Math.max(0,Math.round(seconds*1000));
+  return [Math.floor(ms/3600000),Math.floor(ms/60000)%60,Math.floor(ms/1000)%60].map(n=>String(n).padStart(2,'0')).join(':')+'.'+String(ms%1000).padStart(3,'0');
+}
+if(typeof module!=='undefined')module.exports={readChapters,timestamp};
+
+</script><script>
+const $=id=>document.getElementById(id);let chapters=[],currentFile=null,videoURL=null,job=0;
+const lead=()=>Math.max(0,Math.min(600,Number($('lead').value)||0));
+function render(){const body=$('rows');body.replaceChildren();chapters.forEach((c,i)=>{const tr=document.createElement('tr');[String(i+1),c.title,timestamp(c.seconds),timestamp(Math.max(0,c.seconds-lead()))].forEach((text,j)=>{const td=document.createElement('td');td.textContent=text;td.className=j>=2?'time':'title';tr.append(td);});const td=document.createElement('td'),button=document.createElement('button');button.textContent='Jump';button.setAttribute('aria-label','Preview '+c.title);button.onclick=()=>{$('video').currentTime=Math.max(0,c.seconds-lead());$('video').play().catch(()=>{$('previewnote').textContent='Preview is unavailable for this codec. The timestamps above still work in Filmora.';});};td.append(button);tr.append(td);body.append(tr);});}
+async function openFile(file){if(!file)return;const ticket=++job;chapters=[];currentFile=file;$('results').hidden=true;$('rows').replaceChildren();$('status').textContent='Reading chapter markers from '+file.name+'…';$('previewnote').textContent='';$('video').pause();$('video').removeAttribute('src');$('video').load();if(videoURL){URL.revokeObjectURL(videoURL);videoURL=null;}try{const found=await readChapters(file);if(ticket!==job)return;chapters=found;if(!chapters.length){$('status').textContent='No saved chapter markers found in '+file.name+'.\nUse Hybrid MP4/MOV, press OBS’s Add chapter marker hotkey while recording, then stop normally. Old recordings without markers cannot reveal when a key was pressed.';return;}$('status').textContent=chapters.length+' chapters found in '+file.name;$('results').hidden=false;render();videoURL=URL.createObjectURL(file);$('video').src=videoURL;$('video').hidden=false;$('previewnote').textContent='Optional preview: click Jump to watch the lead-up to a marker.';}catch(e){if(ticket===job)$('status').textContent='Could not read this recording: '+e.message;}}
+$('file').onchange=e=>openFile(e.target.files[0]);for(const event of ['dragenter','dragover'])$('drop').addEventListener(event,e=>{e.preventDefault();$('drop').classList.add('over');});$('drop').ondragleave=()=>$('drop').classList.remove('over');$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');openFile(e.dataTransfer.files[0]);};window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());$('lead').oninput=render;
+const list=()=>currentFile.name+'\nTimes: HH:MM:SS.mmm | Lead-in: '+lead()+' seconds\n\n'+chapters.map((c,i)=>`${i+1}. ${timestamp(c.seconds)} — ${c.title}\n   Start watching: ${timestamp(Math.max(0,c.seconds-lead()))}`).join('\n');
+function save(text,ext,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=currentFile.name.replace(/\.[^.]+$/,'')+'-highlights.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('save').onclick=()=>save(list(),'txt','text/plain;charset=utf-8');$('csv').onclick=()=>{const q=x=>'"'+String(x).replace(/"/g,'""')+'"';save('Number,Chapter,Marker time,Start watching,Seconds\r\n'+chapters.map((c,i)=>[i+1,/^[=+@-]/.test(c.title)?"'"+c.title:c.title,timestamp(c.seconds),timestamp(Math.max(0,c.seconds-lead())),c.seconds].map(q).join(',')).join('\r\n'),'csv','text/csv;charset=utf-8');};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(list());$('status').textContent='Copied all chapter timestamps.';}catch{const area=document.createElement('textarea');area.value=list();document.body.append(area);area.select();const ok=document.execCommand('copy');area.remove();$('status').textContent=ok?'Copied all chapter timestamps.':'Clipboard unavailable. Use Save .txt instead.';}};
+$('video').onerror=()=>{if(chapters.length)$('previewnote').textContent='Your browser cannot preview this codec. The chapter timestamps were still read successfully; use them in Filmora.';};
+</script></html>
+

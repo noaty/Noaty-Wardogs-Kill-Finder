@@ -1,0 +1,5 @@
+numpy==2.5.4
+opencv-python-headless==5.0.0.93
+Pillow==12.3.0
+imageio-ffmpeg==0.7.0
+tkinterdnd2==0.7.0
