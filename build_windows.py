@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 
 if sys.platform != "win32":
     raise SystemExit("Build on Windows with Python 3.12 (64-bit).")
@@ -98,3 +98,4 @@ archive = Path(
 checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
 archive.with_suffix(".sha256").write_text(f"{checksum}  {archive.name}\n", encoding="utf-8")
 print(f"Built {archive.name} ({archive.stat().st_size // 1024 // 1024} MiB)")
+

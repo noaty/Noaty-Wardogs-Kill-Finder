@@ -1,6 +1,6 @@
 # NOATY Kill Finder
 
-## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.0.0.zip)
+## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.2.0.zip)
 
 **Download ZIP → Extract all → Open Noaty Kill Finder.exe.**
 
@@ -17,7 +17,7 @@ Download the Windows ZIP from this repository's **Releases**, then **extract the
 
 **First use:** if FFmpeg is not already installed, click **Yes** on the one-time setup prompt. The app downloads and verifies its scanner component from PyPI, then remembers it. No Python, terminal commands, or manual file selection required. Internet is needed for this initial download only; your videos stay local. You can also provide your own `ffmpeg.exe` beside the app.
 
-The source video is never overwritten. Video and audio are copied without re-encoding. The marked copy needs approximately the same disk space as the source.
+The source video is never overwritten. For marker export, video and audio are copied without re-encoding. The marked copy needs approximately the same disk space as the source.
 
 ## Features
 
@@ -39,7 +39,7 @@ Calibration checks on private recordings found seven notifications in a 48.4-sec
 
 MP4, MOV and MKV can be scanned when FFmpeg supports their codecs. Some MKV audio/subtitle streams cannot be copied into MP4; export then fails safely instead of silently re-encoding. Browser playback in the viewer also depends on codec support. Chapter extraction can still work without playback.
 
-One recording is processed per window. A batch queue is not included. Export writes a full marked recording; it does not automatically cut individual highlight clips.
+One recording is processed per window. A batch queue is not included. Choose full-length marker export or automatic edited highlight export.
 
 ## Run from source
 
@@ -61,7 +61,7 @@ The `imageio-ffmpeg` dependency can provide FFmpeg for source installations. The
 .venv\Scripts\python build_windows.py
 ```
 
-Output: `dist/Noaty-Kill-Finder-Windows-v1.0.0.zip`. Building is supported on Windows. The included tests cover synthetic detection and video export. Public builds are unsigned.
+Output: `dist/Noaty-Kill-Finder-Windows-v1.2.0.zip`. Building is supported on Windows. The included tests cover synthetic detection and video export. Public builds are unsigned.
 
 ## Privacy
 
@@ -74,3 +74,10 @@ When reporting a problem, include the app version, resolution, HUD scale, approx
 ## Rights
 
 Copyright 2026 NOATY. **All rights reserved**; public source visibility is not an open-source reuse license. See [COPYRIGHT.txt](COPYRIGHT.txt) and [THIRD_PARTY.md](THIRD_PARTY.md). Unofficial WARDOGS community project; not affiliated with the game's developers.
+
+## Automatic highlight video export (1.2.0)
+
+Scan and review your markers, then click **EXPORT KILL HIGHLIGHTS**. Change the timing fields if desired: **Before 5 seconds**, **After 5 seconds**, and **Keep together 60 seconds** by default. Kills within the linking interval of the previous kill stay in a continuous segment; separate segments are joined into one MP4. Overlapping windows are merged to avoid duplicated footage. Original recordings remain unchanged.
+
+The save window starts on your Windows Desktop. Choose any output folder; cancelling does not create an export folder. Rendering runs locally, with progress and cancellation. Highlight export re-encodes at H.264 CRF 18 / AAC 192 kbps and is not lossless. **Save video with markers** instead preserves the full recording without re-encoding.
+

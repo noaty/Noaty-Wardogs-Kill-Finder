@@ -1,22 +1,12 @@
-NOATY KILL FINDER 1.0.0
+NOATY KILL FINDER 1.2.0
 
-Extract this entire folder. Run Noaty Kill Finder.exe.
-Keep _internal beside the EXE.
+1. Extract the entire ZIP. Keep _internal beside Noaty Kill Finder.exe.
+2. Open the EXE, choose a video, then SCAN FOR KILLS.
+3. Review detections. Remove incorrect markers or add missed ones.
+4. EXPORT KILL HIGHLIGHTS creates one edited MP4 with audio.
+   Defaults: 5 seconds before, 5 seconds after, link kills within 60 seconds.
+   Edit those fields before export. Choose where to save in the save window.
+5. SAVE VIDEO WITH MARKERS keeps the whole recording and adds chapters for OBS Highlight Finder.html.
 
-1. Drop a recording, then SCAN FOR KILLS.
-2. Review the automatically detected markers.
-3. SAVE VIDEO WITH MARKERS creates a new, full recording with chapters.
-4. OPEN MARKER VIEWER, then drop that marked copy into the viewer.
-
-No AI. No uploads. No re-encoding. Source footage stays untouched.
-NEW CLIP clears the workspace for another recording.
-
-FIRST USE: Click Yes if asked to download the scanner component.
-Setup is automatic. No Python or command-line steps are needed.
-The download comes from PyPI and is checksum-verified. Internet is needed
-only for setup; your recordings never leave your PC.
-You can also use your own ffmpeg.exe beside the app or on PATH.
-
-Review the results: hidden or overlapping notifications can be missed.
-Allow approximately the source recording's size in free disk space.
-See README.md for limitations, troubleshooting and source instructions.
+Highlights are re-encoded; full marked copies are not. Originals remain unchanged.
+First use may ask to download FFmpeg. No Python installation needed.

@@ -1,4 +1,4 @@
-import os, sys, threading, queue, json
+import os, sys, threading, queue, json, math
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog
@@ -8,11 +8,13 @@ import cv2
 from runtime_setup import install_ffmpeg, RUNTIME
 from engine import scan, remux, marker_files, unique, timestamp, Cancelled, ffmpeg
 
+from highlights import export_highlights, segments
+
 RESOURCE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 FINDER = (
     Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 ) / "OBS Highlight Finder.html"
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 SETTINGS = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config")))
     / "Noaty Kill Finder"
@@ -90,7 +92,7 @@ class App:
         )
         ttk.Label(
             outer,
-            text="1  Choose a video     →     2  Scan & review     →     3  Save video with markers",
+            text="1  Choose a video     →     2  Scan & review     →     3  Export highlights or save markers",
         ).pack(anchor="w")
         self.drop = tk.Label(
             outer,
@@ -186,6 +188,19 @@ class App:
             foreground="#95a8bf",
             wraplength=740,
         ).pack(anchor="w", pady=(5, 0))
+        clips = ttk.Frame(outer)
+        clips.pack(fill="x", before=middle, pady=(4, 8))
+        self.clipsbtn = ttk.Button(clips, text="EXPORT KILL HIGHLIGHTS", style="Primary.TButton", command=self.export_clips)
+        self.clipsbtn.pack(side="left")
+        self.clip_before = tk.StringVar(value="5")
+        self.clip_after = tk.StringVar(value="5")
+        self.clip_gap = tk.StringVar(value="60")
+        self.clip_inputs = []
+        for label, variable in [("Before (s)", self.clip_before), ("After (s)", self.clip_after), ("Keep together (s)", self.clip_gap)]:
+            ttk.Label(clips, text=label).pack(side="left", padx=(10, 4))
+            entry = ttk.Entry(clips, textvariable=variable, width=5)
+            entry.pack(side="left")
+            self.clip_inputs.append(entry)
         self.set_busy(False)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.after(100, self.poll)
@@ -287,11 +302,14 @@ class App:
 
     def set_busy(self, b):
         self.busy = b
+        for entry in self.clip_inputs:
+            entry.config(state="disabled" if b else "normal")
         for button in [
             self.settingsbtn,
             self.newbtn,
             self.scanbtn,
             self.exportbtn,
+            self.clipsbtn,
             self.savebtn,
             self.removebtn,
             self.restorebtn,
@@ -300,7 +318,7 @@ class App:
             button.config(state="disabled" if b else "normal")
         self.cancelbtn.config(state="normal" if b else "disabled")
         if not b:
-            for button in [self.exportbtn, self.savebtn, self.removebtn, self.restorebtn]:
+            for button in [self.exportbtn, self.clipsbtn, self.savebtn, self.removebtn, self.restorebtn]:
                 button.config(state="normal" if self.events else "disabled")
             self.addbtn.config(state="normal" if self.info else "disabled")
 
@@ -391,6 +409,11 @@ class App:
                         + str(msg[1])
                         + "\n\nThe original was not changed.",
                     )
+                elif msg[0] == "highlights":
+                    self.set_busy(False)
+                    self.progress["value"] = 100
+                    self.status.set("Highlights ready: " + str(msg[1]))
+                    messagebox.showinfo("Highlights ready", "Your edited video is ready:\n\n" + str(msg[1]) + "\n\nOriginal recording unchanged.")
                 elif msg[0] == "cancelled":
                     self.set_busy(False)
                     self.status.set("Cancelled. Original recording unchanged.")
@@ -516,6 +539,49 @@ class App:
 
         threading.Thread(target=work, daemon=True).start()
 
+    def export_clips(self):
+        if self.busy or not self.events:
+            return
+        try:
+            before, after, gap = [float(v.get()) for v in (self.clip_before, self.clip_after, self.clip_gap)]
+            if any(not math.isfinite(v) or v < 0 for v in (before, after, gap)) or before + after <= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showerror("Highlight timing", "Enter non-negative seconds. Before and after cannot both be zero.")
+            return
+        folder = Path.home() / "Desktop"
+        if sys.platform == "win32":
+            try:
+                import winreg
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders") as key:
+                    folder = Path(os.path.expandvars(winreg.QueryValueEx(key, "Desktop")[0]))
+            except OSError:
+                pass
+        if not folder.is_dir():
+            folder = Path.home()
+        dest = unique(folder / (self.video.stem + " - KILL HIGHLIGHTS.mp4"))
+        p = filedialog.asksaveasfilename(initialdir=str(folder), initialfile=dest.name,
+            defaultextension=".mp4", filetypes=[("Highlights video", "*.mp4")])
+        if not p:
+            return
+        events = [e.copy() for e in self.events]
+        video, info = self.video, self.info.copy()
+        self.cancel.clear()
+        self.set_busy(True)
+        self.progress["value"] = 0
+        self.status.set("Editing kill highlights… Original video stays untouched.")
+        def work():
+            try:
+                out = export_highlights(video, events, info, p, self.cancel,
+                    lambda f: self.messages.put(("progress", f, f"Exporting highlights… {f:.0%}")),
+                    before=before, after=after, gap=gap)
+                self.messages.put(("highlights", out))
+            except Cancelled:
+                self.messages.put(("cancelled",))
+            except Exception as e:
+                self.messages.put(("error", str(e)))
+        threading.Thread(target=work, daemon=True).start()
+
     def open_finder(self):
         p = FINDER if FINDER.exists() else Path(sys.executable).parent / "OBS Highlight Finder.html"
         if p.exists():
@@ -539,3 +605,4 @@ class App:
 
 if __name__ == "__main__":
     App().run()
+
