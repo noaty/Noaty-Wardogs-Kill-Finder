@@ -1,6 +1,6 @@
 # NOATY Kill Finder
 
-## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.2.1.zip)
+## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.2.2.zip)
 
 **Download ZIP → Extract all → Open Noaty Kill Finder.exe.**
 
@@ -21,7 +21,7 @@ The source video is never overwritten. For marker export, video and audio are co
 
 ## Features
 
-- Automatic 75%, 85%, 90%, 100%, 110%, 125% and 150% notification-text matching, including size changes within a video.
+- Automatic 50%–200% notification-text matching with low-resolution alignment variants, including size changes within a video.
 - Counts separate stacked confirmation lines, including tested double kills.
 - Timestamp list, frame preview, remove/restore, and optional manual corrections.
 - New Clip reset, cancellation, full-decoded-duration reporting, and incomplete-scan detection.
@@ -61,7 +61,7 @@ The `imageio-ffmpeg` dependency can provide FFmpeg for source installations. The
 .venv\Scripts\python build_windows.py
 ```
 
-Output: `dist/Noaty-Kill-Finder-Windows-v1.2.1.zip`. Building is supported on Windows. The included tests cover synthetic detection and video export. Public builds are unsigned.
+Output: `dist/Noaty-Kill-Finder-Windows-v1.2.2.zip`. Building is supported on Windows. The included tests cover synthetic detection and video export. Public builds are unsigned.
 
 ## Privacy
 
@@ -75,7 +75,7 @@ When reporting a problem, include the app version, resolution, HUD scale, approx
 
 Copyright 2026 NOATY. **All rights reserved**; public source visibility is not an open-source reuse license. See [COPYRIGHT.txt](COPYRIGHT.txt) and [THIRD_PARTY.md](THIRD_PARTY.md). Unofficial WARDOGS community project; not affiliated with the game's developers.
 
-## Automatic highlight video export (1.2.1)
+## Automatic highlight video export (1.2.2)
 
 Scan and review your markers, then click **EXPORT KILL HIGHLIGHTS**. Change the timing fields if desired: **Before 5 seconds**, **After 5 seconds**, and **Keep together 60 seconds** by default. Kills within the linking interval of the previous kill stay in a continuous segment; separate segments are joined into one MP4. Overlapping windows are merged to avoid duplicated footage. Original recordings remain unchanged.
 

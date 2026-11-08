@@ -14,7 +14,7 @@ RESOURCE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 FINDER = (
     Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 ) / "OBS Highlight Finder.html"
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 SETTINGS = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config")))
     / "Noaty Kill Finder"
@@ -216,7 +216,7 @@ class App:
         dialog.resizable(False, False)
         box = ttk.Frame(dialog, padding=20)
         box.pack(fill="both", expand=True)
-        ttk.Label(box, text="Auto checks HUD text sizes from 75% to 150% in every frame.").pack(
+        ttk.Label(box, text="Auto checks HUD sizes from 50% to 200% and adjusts for low-resolution text.").pack(
             anchor="w"
         )
         ttk.Label(box, text="Extra HUD scale (only needed for other UI sizes)").pack(

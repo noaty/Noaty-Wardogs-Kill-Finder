@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 if sys.platform != "win32":
     raise SystemExit("Build on Windows with Python 3.12 (64-bit).")

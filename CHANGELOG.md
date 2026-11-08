@@ -1,9 +1,17 @@
 # Changelog
 
+## 1.2.2
+- Resolution-aware text templates retain matching detail at 480p and 720p. Low-resolution alignment checks take more processing time.
+- Wider 50%–200% HUD size coverage and a taller search area; narrow frames are padded before the center crop.
+- Merge overlapping match boxes across template sizes instead of suppressing only top-left rows.
+- Generated-video checks passed at 854x480, 1280x720, 1920x1080, 2560x1440, 3840x2160, 2560x1080, 3440x1440, 5120x1440, 1280x1024, and 1920x1200.
+- A seven-second gameplay segment retained its one expected confirmation when resized to 480p, 720p, 1440p and 4K.
+- These checks do not guarantee every recording: cropped/letterboxed footage, hidden or heavily compressed text and custom HUD placement may still miss notifications.
+
 ## 1.2.1
 - Validate FFmpeg by running it before scanning; missing/broken paths trigger setup instead of passing preflight.
 - Validate downloaded FFmpeg before saving the installation.
-- Search seven HUD text sizes (75%–150%) automatically instead of two.
+- Search seven HUD text sizes (75%â€“150%) automatically instead of two.
 - Check every rendered highlight segment for incomplete output and show the number of markers/clips being exported.
 - Regression checks retained all seven confirmations in the existing sample and all three distinct segments in a generated export. The reported 3-of-11 misses and first-kill-only export could not be reproduced without the affected recording.
 

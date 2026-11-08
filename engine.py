@@ -111,23 +111,60 @@ def group_hits(hits, rate=10, threshold=0.78, gap=0.45, min_hits=2):
 
 
 def notification_matches(frame, template, threshold):
-    # Keep every separate text row, not just the single best match in the frame.
+    # Match boxes, not top-left rows: differently sized templates can describe
+    # the same text at slightly different coordinates.
     templates = template if isinstance(template, list) else [template]
     filtered = highpass(frame)
-    rows = np.full(frame.shape[0], -1, dtype=np.float32)
+    candidates = []
     for candidate in templates:
+        h, w = candidate.shape
+        if h > frame.shape[0] or w > frame.shape[1]:
+            continue
         result = cv2.matchTemplate(filtered, candidate, cv2.TM_CCOEFF_NORMED)
-        rows[: result.shape[0]] = np.maximum(rows[: result.shape[0]], result.max(axis=1))
-    matches = []
-    spacing = max(3, round(min(t.shape[0] for t in templates) * 0.7))
-    while True:
-        y = int(rows.argmax())
-        score = float(rows[y])
-        if score < threshold:
-            break
-        matches.append(float(score))
-        rows[max(0, y - spacing) : min(len(rows), y + spacing + 1)] = -1
-    return matches
+        for _ in range(100):
+            _, score, _, (x, y) = cv2.minMaxLoc(result)
+            if score < threshold:
+                break
+            candidates.append((float(score), x, y, w, h))
+            result[max(0,y-h//2):y+h//2+1, max(0,x-w//2):x+w//2+1] = -1
+    kept = []
+    for box in sorted(candidates, reverse=True):
+        score, x, y, w, h = box
+        duplicate = False
+        for _, bx, by, bw, bh in kept:
+            overlap_x = max(0, min(x+w,bx+bw)-max(x,bx))
+            overlap_y = max(0, min(y+h,by+bh)-max(y,by))
+            if overlap_x > .5*min(w,bw) and overlap_y > .5*min(h,bh):
+                duplicate = True
+                break
+        if not duplicate:
+            kept.append(box)
+    return [box[0] for box in kept]
+
+
+def hud_templates(reference, height, scale=1.0):
+    """Normalize HUD size and imitate detail lost in sub-1080p recordings."""
+    scales = sorted(set([.5, .625, .75, .85, .9, 1., 1.1, 1.25, 1.5, 1.75, 2., float(scale)]))
+    result = []
+    for factor in scales:
+        candidate = cv2.resize(reference, None, fx=factor, fy=factor,
+                               interpolation=cv2.INTER_CUBIC)
+        result.append(candidate)
+        if height < 1080:
+            # Resizing an isolated glyph loses subpixel alignment. Simulate
+            # downsampling on a padded canvas at several pixel alignments.
+            phases = min(4, int(np.ceil(1080/height)))
+            h, w = candidate.shape
+            for dy in range(phases):
+                for dx in range(phases):
+                    canvas = np.zeros((108, 432), np.uint8)
+                    y, x = 40+dy, 40+dx
+                    canvas[y:y+h, x:x+w] = candidate
+                    small = cv2.resize(canvas, (round(432*height/1080), round(108*height/1080)),
+                                       interpolation=cv2.INTER_AREA)
+                    restored = cv2.resize(small, (432,108), interpolation=cv2.INTER_CUBIC)
+                    result.append(restored[y:y+h, x:x+w])
+    return [highpass(t) for t in result]
 
 
 def group_notifications(frames, rate=10, threshold=0.78):
@@ -156,19 +193,10 @@ def scan(
     template = cv2.imread(str(template_path), cv2.IMREAD_GRAYSCALE)
     if template is None:
         raise ValueError("Notification template is missing.")
-    # HUD scale can differ independently of recording resolution.
-    # Merge scale matches before counting to avoid duplicate notifications.
-    scales = sorted(set([0.75, 0.85, 0.9, 1.0, 1.1, 1.25, 1.5, float(scale)]))
-    template = [
-        highpass(
-            template
-            if s == 1
-            else cv2.resize(template, None, fx=s, fy=s, interpolation=cv2.INTER_CUBIC)
-        )
-        for s in scales
-    ]
-    # Preserve aspect ratio, normalise HUD height, then decode only the small search window to Python.
-    vf = f"setpts=PTS-STARTPTS,fps={rate}:start_time=0,scale=-2:1080,crop=540:280:(iw-540)/2:620,format=gray"
+    template = hud_templates(template, info["height"], scale)
+    # Height normalization preserves wide/tall aspect ratios. Pad very narrow
+    # videos so the center search crop is always valid.
+    vf = f"setpts=PTS-STARTPTS,fps={rate}:start_time=0,scale=-2:1080,pad=max(iw\\,540):1080:(ow-iw)/2:0,crop=540:380:(iw-540)/2:540,format=gray"
     with tempfile.TemporaryFile() as errors:
         p = subprocess.Popen(
             [
@@ -211,12 +239,12 @@ def scan(
             while True:
                 if cancel.is_set():
                     raise Cancelled()
-                raw = p.stdout.read(540 * 280)
+                raw = p.stdout.read(540 * 380)
                 if not raw:
                     break
-                if len(raw) != 540 * 280:
+                if len(raw) != 540 * 380:
                     raise ValueError("Decoder returned an incomplete frame.")
-                frame = np.frombuffer(raw, np.uint8).reshape(280, 540)
+                frame = np.frombuffer(raw, np.uint8).reshape(380, 540)
                 scores = notification_matches(frame, template, threshold)
                 hits.append((i / rate, scores))
                 i += 1
@@ -482,3 +510,4 @@ def remux(video, events, info, output, cancel=None, progress=lambda *a: None):
     finally:
         Path(metadata).unlink(missing_ok=True)
         partial.unlink(missing_ok=True)
+
