@@ -14,7 +14,7 @@ RESOURCE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 FINDER = (
     Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 ) / "OBS Highlight Finder.html"
-VERSION = "1.2.2"
+VERSION = "1.2.3"
 SETTINGS = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config")))
     / "Noaty Kill Finder"
@@ -34,7 +34,7 @@ class App:
         except (OSError, ValueError):
             pass
         self.root = TkinterDnD.Tk()
-        self.root.title("NOATY Kill Finder Â· " + VERSION)
+        self.root.title("NOATY Kill Finder - " + VERSION)
         self.root.geometry(
             f"{min(1120,self.root.winfo_screenwidth()-60)}x{min(820,self.root.winfo_screenheight()-100)}"
         )
@@ -92,7 +92,7 @@ class App:
         )
         ttk.Label(
             outer,
-            text="1  Choose a video     â†’     2  Scan & review     â†’     3  Export highlights or save markers",
+            text="1  Choose a video     ->     2  Scan & review     ->     3  Export highlights or save markers",
         ).pack(anchor="w")
         self.drop = tk.Label(
             outer,
@@ -110,7 +110,7 @@ class App:
         self.drop.drop_target_register(DND_FILES)
         self.drop.dnd_bind("<<Drop>>", self.on_drop)
         self.filetext = tk.StringVar(
-            value="MP4, MOV or MKV â€¢ No uploads â€¢ Original recording stays untouched"
+            value="MP4, MOV or MKV | No uploads | Original recording stays untouched"
         )
         ttk.Label(outer, textvariable=self.filetext, wraplength=1030).pack(anchor="w")
         tools = ttk.Frame(outer)
@@ -228,7 +228,7 @@ class App:
             values=["Auto", "75%", "85%", "90%", "100%", "110%", "125%", "150%"],
             state="readonly",
         ).pack(anchor="w")
-        ttk.Label(box, text="Match threshold Â· default 0.78").pack(anchor="w", pady=(14, 4))
+        ttk.Label(box, text="Match threshold - default 0.78").pack(anchor="w", pady=(14, 4))
         ttk.Entry(box, textvariable=self.threshold, width=10).pack(anchor="w")
         ttk.Label(box, text="Lower values may catch faint text but can add false matches.").pack(
             anchor="w", pady=10
@@ -297,7 +297,7 @@ class App:
         self.previewtime.set("Frame preview")
         self.set_busy(False)
         self.drop.config(text="Drop a recording here, or click to choose one")
-        self.filetext.set("MP4, MOV or MKV â€¢ No uploads â€¢ Original recording stays untouched")
+        self.filetext.set("MP4, MOV or MKV | No uploads | Original recording stays untouched")
         self.status.set("Ready for a new clip. Drop a recording above or click to choose one.")
 
     def set_busy(self, b):
@@ -349,7 +349,7 @@ class App:
         self.cancel.clear()
         self.set_busy(True)
         self.progress["value"] = 0
-        self.status.set("Scanning the notification areaâ€¦")
+        self.status.set("Scanning the notification area...")
         video = self.video
 
         def work():
@@ -358,7 +358,7 @@ class App:
                     install_ffmpeg(
                         self.cancel,
                         lambda f: self.messages.put(
-                            ("progress", f, "One-time setup: downloading video scannerâ€¦")
+                            ("progress", f, "One-time setup: downloading video scanner...")
                         ),
                     )
                 result = scan(
@@ -371,7 +371,7 @@ class App:
                         (
                             "progress",
                             fraction,
-                            f"Scanned {timestamp(t)} â€¢ {t/max(elapsed,.01):.1f}Ã— playback speed",
+                            f"Scanned {timestamp(t)} | {t/max(elapsed,.01):.1f}x playback speed",
                         )
                     ),
                 )
@@ -457,7 +457,7 @@ class App:
             self.photo = ImageTk.PhotoImage(im)
             self.previewlabel.config(image=self.photo, text="")
             self.previewtime.set(
-                "Frame at " + timestamp(t) + " â€¢ marker " + timestamp(e["seconds"])
+                "Frame at " + timestamp(t) + " | marker " + timestamp(e["seconds"])
             )
 
     def remove(self):
@@ -517,7 +517,7 @@ class App:
         self.cancel.clear()
         self.set_busy(True)
         self.progress["value"] = 0
-        self.status.set("Copying streams and adding chapters. No re-encodingâ€¦")
+        self.status.set("Copying streams and adding chapters. No re-encoding...")
         events = [e.copy() for e in self.events]
 
         def work():
@@ -528,7 +528,7 @@ class App:
                     self.info,
                     p,
                     self.cancel,
-                    lambda f: self.messages.put(("progress", f, "Writing marked copyâ€¦")),
+                    lambda f: self.messages.put(("progress", f, "Writing marked copy...")),
                 )
                 marker_files(self.video, events, self.info, self.stats, Path(p).parent)
                 self.messages.put(("exported", out))
@@ -569,11 +569,11 @@ class App:
         self.cancel.clear()
         self.set_busy(True)
         self.progress["value"] = 0
-        self.status.set("Editing kill highlightsâ€¦ Original video stays untouched.")
+        self.status.set("Editing kill highlights... Original video stays untouched.")
         def work():
             try:
                 out = export_highlights(video, events, info, p, self.cancel,
-                    lambda f: self.messages.put(("progress", f, f"Exporting highlightsâ€¦ {f:.0%}")),
+                    lambda f: self.messages.put(("progress", f, f"Exporting highlights... {f:.0%}")),
                     before=before, after=after, gap=gap)
                 self.messages.put(("highlights", out))
             except Cancelled:
@@ -594,7 +594,7 @@ class App:
     def close(self):
         if self.busy:
             self.cancel.set()
-            self.status.set("Cancelling safelyâ€¦")
+            self.status.set("Cancelling safely...")
             self.root.after(300, self.close)
         else:
             self.root.destroy()

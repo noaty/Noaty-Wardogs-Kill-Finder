@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3
+- Fix corrupted punctuation in the app title, workflow labels, scan speed, previews and progress messages.
+- Use plain-text separators so these labels remain readable across Windows locale settings.
+- Detection and export behavior are unchanged from 1.2.2.
+
 ## 1.2.2
 - Resolution-aware text templates retain matching detail at 480p and 720p. Low-resolution alignment checks take more processing time.
 - Wider 50%–200% HUD size coverage and a taller search area; narrow frames are padded before the center crop.
@@ -11,7 +16,7 @@
 ## 1.2.1
 - Validate FFmpeg by running it before scanning; missing/broken paths trigger setup instead of passing preflight.
 - Validate downloaded FFmpeg before saving the installation.
-- Search seven HUD text sizes (75%â€“150%) automatically instead of two.
+- Search seven HUD text sizes (75%–150%) automatically instead of two.
 - Check every rendered highlight segment for incomplete output and show the number of markers/clips being exported.
 - Regression checks retained all seven confirmations in the existing sample and all three distinct segments in a generated export. The reported 3-of-11 misses and first-kill-only export could not be reproduced without the affected recording.
 
