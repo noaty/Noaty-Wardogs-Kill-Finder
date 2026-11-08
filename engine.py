@@ -15,18 +15,44 @@ FLAGS = 0x08000000 if os.name == "nt" else 0
 cv2.setNumThreads(2)
 
 
+_verified_ffmpeg = {}
+
+
+def validate_ffmpeg(candidate):
+    """Accept only an executable that actually runs, invalidating replaced files."""
+    if not candidate:
+        return None
+    resolved = shutil.which(str(candidate)) or str(candidate)
+    path = Path(resolved)
+    try:
+        stat = path.stat()
+        key = (str(path.resolve()), stat.st_size, stat.st_mtime_ns)
+        if key not in _verified_ffmpeg:
+            result = subprocess.run([str(path), "-version"], capture_output=True,
+                                    timeout=15, creationflags=FLAGS)
+            if result.returncode != 0 or b"ffmpeg version" not in result.stdout.lower():
+                return None
+            _verified_ffmpeg[key] = True
+        return str(path.resolve())
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def ffmpeg():
     bundled = Path(__file__).resolve().parent / "ffmpeg.exe"
     portable = Path(__import__("sys").executable).parent / "ffmpeg.exe"
-    for candidate in (
-        os.environ.get("IMAGEIO_FFMPEG_EXE"),
-        str(portable),
-        str(bundled),
-        shutil.which("ffmpeg"),
-    ):
-        if candidate and Path(candidate).is_file():
-            return str(candidate)
-    return imageio_ffmpeg.get_ffmpeg_exe()
+    for candidate in (os.environ.get("IMAGEIO_FFMPEG_EXE"), portable, bundled,
+                      shutil.which("ffmpeg")):
+        valid = validate_ffmpeg(candidate)
+        if valid:
+            return valid
+    try:
+        valid = validate_ffmpeg(imageio_ffmpeg.get_ffmpeg_exe())
+        if valid:
+            return valid
+    except (RuntimeError, OSError):
+        pass
+    raise RuntimeError("FFmpeg is missing or cannot run. Install the scanner component and retry.")
 
 
 def timestamp(t):
@@ -130,9 +156,9 @@ def scan(
     template = cv2.imread(str(template_path), cv2.IMREAD_GRAYSCALE)
     if template is None:
         raise ValueError("Notification template is missing.")
-    # Actual footage changes between normal and 125% notification text mid-video.
-    # Search both sizes every frame; merge matches before counting to avoid duplicates.
-    scales = sorted(set([1.0, 1.25, float(scale)]))
+    # HUD scale can differ independently of recording resolution.
+    # Merge scale matches before counting to avoid duplicate notifications.
+    scales = sorted(set([0.75, 0.85, 0.9, 1.0, 1.1, 1.25, 1.5, float(scale)]))
     template = [
         highpass(
             template

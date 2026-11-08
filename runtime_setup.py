@@ -8,7 +8,7 @@ import tempfile
 import urllib.request
 import zipfile
 
-from engine import Cancelled
+from engine import Cancelled, validate_ffmpeg
 
 RUNTIME = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config"))) / "Noaty Kill Finder" / "runtime"
@@ -60,6 +60,8 @@ def install_ffmpeg(cancel, progress):
             binary.write_bytes(wheel_zip.read(member))
             if cancel.is_set():
                 raise Cancelled()
+            if not validate_ffmpeg(binary):
+                raise RuntimeError("Downloaded FFmpeg could not run. Setup was not completed; retry or place a working ffmpeg.exe beside the app.")
             os.replace(binary, destination)
     os.environ["IMAGEIO_FFMPEG_EXE"] = str(destination)
     return destination

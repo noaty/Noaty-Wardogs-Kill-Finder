@@ -79,6 +79,9 @@ def export_highlights(video, events, info, output, cancel=None, progress=lambda 
                  '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p',
                  '-c:a', 'aac', '-b:a', '192k', '-avoid_negative_ts', 'make_zero',
                  '-n', str(tmp/f'{i:05}.mp4')], .95*elapsed/total, length, .95*length/total)
+            actual_part = probe(tmp/f'{i:05}.mp4')['duration']
+            if abs(actual_part-length) > max(1, length*.01):
+                raise RuntimeError(f'Clip {i+1} of {len(spans)} is incomplete. No finished video was saved.')
             elapsed += length
         listing = tmp/'segments.txt'
         listing.write_text(''.join("file '%05d.mp4'\n" % i for i in range(len(spans))), encoding='utf-8')

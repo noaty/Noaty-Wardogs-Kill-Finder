@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+- Validate FFmpeg by running it before scanning; missing/broken paths trigger setup instead of passing preflight.
+- Validate downloaded FFmpeg before saving the installation.
+- Search seven HUD text sizes (75%–150%) automatically instead of two.
+- Check every rendered highlight segment for incomplete output and show the number of markers/clips being exported.
+- Regression checks retained all seven confirmations in the existing sample and all three distinct segments in a generated export. The reported 3-of-11 misses and first-kill-only export could not be reproduced without the affected recording.
+
 ## 1.2.0
 - Export all reviewed kill markers as one edited MP4 with audio.
 - Editable lead-in, tail and consecutive-kill linking interval. Defaults: 5 / 5 / 60 seconds.

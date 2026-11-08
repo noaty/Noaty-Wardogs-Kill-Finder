@@ -52,6 +52,28 @@ class DetectionTests(unittest.TestCase):
         matches = notification_matches(frame, [highpass(reference), highpass(large)], 0.78)
         self.assertEqual(len(matches), 2)
 
+    def test_auto_hud_sizes(self):
+        reference = cv2.imread(str(ROOT / "template.png"), 0)
+        templates = [cv2.resize(reference, None, fx=s, fy=s, interpolation=cv2.INTER_CUBIC)
+                     for s in (.75, .85, .9, 1, 1.1, 1.25, 1.5)]
+        for text in templates:
+            frame = np.zeros((280, 540), np.uint8)
+            h, w = text.shape
+            frame[70:70+h, 100:100+w] = text
+            self.assertEqual(len(notification_matches(frame, [highpass(t) for t in templates], .78)), 1)
+
+    def test_missing_ffmpeg_is_not_accepted(self):
+        import os
+        import engine
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as folder:
+            missing = str(Path(folder) / "missing.exe")
+            with patch.dict(os.environ, {"IMAGEIO_FFMPEG_EXE": missing}), \
+                 patch.object(engine.shutil, "which", return_value=None), \
+                 patch.object(engine.imageio_ffmpeg, "get_ffmpeg_exe", return_value=missing):
+                with self.assertRaises(RuntimeError):
+                    ffmpeg()
+
     def test_blank_frame(self):
         reference = cv2.imread(str(ROOT / "template.png"), 0)
         self.assertEqual(
