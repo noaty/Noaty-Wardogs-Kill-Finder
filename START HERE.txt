@@ -10,3 +10,13 @@ NOATY KILL FINDER 1.2.0
 
 Highlights are re-encoded; full marked copies are not. Originals remain unchanged.
 First use may ask to download FFmpeg. No Python installation needed.
+
+AUDIO DETECTION (default): Scan for kills listens for the confirmation chime.
+Detection settings lets you choose Auto, All tracks, or a specific audio track.
+If no chimes are found, try All tracks or select Notification text.
+Muted or filtered game audio may not contain the chime. Nearby simultaneous
+kills can share one marker. Review the timestamps before exporting.
+Audio detection contributed by whiskysix (Whisky).
+
+REVIEW FLAGS
+Audio + visual check is the default. Audio finds candidates quickly; nearby frames check KILL CONFIRMED text. Amber candidates are unverified, not necessarily wrong. Switch ON to keep a result, or OFF to exclude it. Remove all OFF removes excluded rows. Restore results restores scan decisions. Only included markers are exported. Audio-only and visual-only are available in Detection method.

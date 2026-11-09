@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0
+- Save detection preferences between launches; Reset defaults restores recommended values before saving.
+- Denser fallback visual checks around audio candidates and finer glyph-size matching, without reducing the match threshold.
+- Animated ON/OFF export switches on every result; a bulk Remove all OFF control.
+- Refreshed desktop UI with larger frame preview, visible detection mode and export controls.
+- Default audio-first mode visually checks only nearby candidate frames. Unverified candidates are amber and excluded until manually kept; click FLAG/KEEP or use Remove all flagged. All exports honor those choices. Audio-only and visual-only remain available.
+- Detect kills by the kill-confirm chime in the game audio. The chime's narrow partials near 12.9 kHz and 16.8 kHz are measured against their neighbouring frequencies, to help reject broadband noise and the result does not depend on resolution, HUD scale or window layout.
+- Whisky reports his 53-minute recording scans in about 24 seconds instead of over an hour; speed varies by hardware and recording. All eleven detections in that recording line up with a visible KILL CONFIRMED notification; one of them is a double kill reported as a single marker.
+- New Detection settings: detection method, sound sensitivity in dB, and audio track. Auto scans the first track and checks the others only when nothing is found; All tracks scans every track in one pass.
+- The Match column shows chime prominence in dB for sound detections; exported JSON records the method, tracks scanned and hits per track.
+- Notification-text matching remains available as the second method for recordings without game audio. Its behaviour is unchanged.
+- Add a three-lower-partial alternative for edited audio whose encoder removes the upper chime frequency; validated 70 markers against visible confirmations in seven finished edits.
+- Credit: audio scanner and integration contributed by whiskysix (Whisky).
+- Avoid counting a continuous tone twice across processing chunks; add guidance when no audio matches are found.
+- No new dependencies; the spectral analysis uses NumPy only.
+
 ## 1.2.3
 - Fix corrupted punctuation in the app title, workflow labels, scan speed, previews and progress messages.
 - Use plain-text separators so these labels remain readable across Windows locale settings.
