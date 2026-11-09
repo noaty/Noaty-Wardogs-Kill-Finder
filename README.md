@@ -1,6 +1,6 @@
 # NOATY Kill Finder
 
-## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.3.0.zip)
+## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.3.1.zip)
 
 **Download ZIP → Extract all → Open Noaty Kill Finder.exe.**
 
@@ -64,7 +64,7 @@ The `imageio-ffmpeg` dependency can provide FFmpeg for source installations. The
 .venv\Scripts\python build_windows.py
 ```
 
-Output: `dist/Noaty-Kill-Finder-Windows-v1.3.0.zip`. Building is supported on Windows. The included tests cover synthetic sound and notification detection, multi-track selection, and video export. Public builds are unsigned.
+Output: `dist/Noaty-Kill-Finder-Windows-v1.3.1.zip`. Building is supported on Windows. The included tests cover synthetic sound and notification detection, multi-track selection, and video export. Public builds are unsigned.
 
 ## Privacy
 
@@ -84,7 +84,7 @@ Audio detection and the integration patch contributed by **whiskysix (Whisky)**.
 
 Copyright 2026 NOATY. **All rights reserved**; public source visibility is not an open-source reuse license. See [COPYRIGHT.txt](COPYRIGHT.txt) and [THIRD_PARTY.md](THIRD_PARTY.md). Unofficial WARDOGS community project; not affiliated with the game's developers.
 
-## Automatic highlight video export (1.3.0)
+## Automatic highlight video export (1.3.1)
 
 Scan and review your markers, then click **EXPORT KILL HIGHLIGHTS**. Change the timing fields if desired: **Before 5 seconds**, **After 5 seconds**, and **Keep together 60 seconds** by default. Kills within the linking interval of the previous kill stay in a continuous segment; separate segments are joined into one MP4. Overlapping windows are merged to avoid duplicated footage. Original recordings remain unchanged.
 

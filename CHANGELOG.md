@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+- Include the certificate-policy resource required by the build runtime, fixing first-use FFmpeg setup failing with FileNotFoundError. HTTPS verification remains enabled.
+- Test first-use setup and audio scanning from a freshly extracted Windows package.
+
 ## 1.3.0
 - Save detection preferences between launches; Reset defaults restores recommended values before saving.
 - Denser fallback visual checks around audio candidates and finer glyph-size matching, without reducing the match threshold.

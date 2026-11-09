@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 if sys.platform != "win32":
     raise SystemExit("Build on Windows with Python 3.12 (64-bit).")
@@ -19,9 +19,16 @@ build.mkdir(exist_ok=True)
 spec = build / "Noaty Kill Finder.spec"
 spec.write_text(
     '''from PyInstaller.utils.hooks import collect_all
+from pathlib import Path
+import ssl
+# Some Python distributions load this trust-policy resource in SSLContext.
+# Keep it alongside frozen ssl.py; never bypass certificate verification.
 datas = [(r"'''
     + str(ROOT / "template.png")
     + '''", '.')]
+policy = Path(ssl.__file__).with_name('codex-rejected-cas.pem')
+if policy.is_file():
+    datas.append((str(policy), '.'))
 binaries = []
 hiddenimports = []
 for package in ('tkinterdnd2', 'imageio_ffmpeg'):

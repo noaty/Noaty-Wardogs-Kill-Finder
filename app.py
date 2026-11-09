@@ -18,7 +18,7 @@ RESOURCE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 FINDER = (
     Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 ) / "OBS Highlight Finder.html"
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 METHODS = ("Audio + visual check (recommended)", "Kill sound (audio only)", "Notification text (video only)")
 SETTINGS = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config")))
@@ -787,6 +787,23 @@ class App:
 
 
 if __name__ == "__main__":
-    App().run()
+    if len(sys.argv) > 2 and sys.argv[1] == "--diagnose-runtime":
+        import runtime_setup, traceback
+        folder = Path(sys.argv[2]).resolve()
+        folder.mkdir(parents=True, exist_ok=True)
+        runtime_setup.RUNTIME = folder / "runtime"
+        report = {}
+        try:
+            binary = runtime_setup.install_ffmpeg(threading.Event(), lambda f: None)
+            report['runtime'] = str(binary)
+            report['resolved'] = ffmpeg()
+            if len(sys.argv) > 3:
+                report['scan'] = scan_audio(Path(sys.argv[3]))
+            report['ok'] = True
+        except Exception:
+            report['error'] = traceback.format_exc()
+        (folder / "diagnostics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    else:
+        App().run()
 
 
