@@ -18,7 +18,7 @@ RESOURCE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 FINDER = (
     Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 ) / "OBS Highlight Finder.html"
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 METHODS = ("Audio + visual check (recommended)", "Kill sound (audio only)", "Notification text (video only)")
 SETTINGS = (
     Path(os.environ.get("APPDATA", str(Path.home() / ".config")))
@@ -38,7 +38,14 @@ class App:
                 os.environ["IMAGEIO_FFMPEG_EXE"] = binary
         except (OSError, ValueError):
             pass
+        if sys.platform == "win32":
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("NOATY.KillFinder")
         self.root = TkinterDnD.Tk()
+        icon = RESOURCE / "killfinder.ico"
+        if sys.platform == "win32" and icon.is_file():
+            self.root.iconbitmap(str(icon))
+            self.root.iconbitmap(default=str(icon))
         self.root.title("NOATY Kill Finder - " + VERSION)
         self.root.geometry(
             f"{min(1280,self.root.winfo_screenwidth()-60)}x{min(900,self.root.winfo_screenheight()-100)}"
@@ -805,5 +812,3 @@ if __name__ == "__main__":
         (folder / "diagnostics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     else:
         App().run()
-
-

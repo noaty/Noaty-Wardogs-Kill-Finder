@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+- Add NOATY's custom Kill Finder icon to the Windows executable, app window and dialogs.
+- Give the app its own Windows taskbar identity.
+- Include the editable GIMP artwork in the source repository.
+- Detection, saved preferences and video export behavior are unchanged.
+
 ## 1.3.1
 - Include the certificate-policy resource required by the build runtime, fixing first-use FFmpeg setup failing with FileNotFoundError. HTTPS verification remains enabled.
 - Test first-use setup and audio scanning from a freshly extracted Windows package.

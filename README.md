@@ -1,6 +1,6 @@
 # NOATY Kill Finder
 
-## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.3.1.zip)
+## [⬇ Download for Windows](https://github.com/noaty/Noaty-Wardogs-Kill-Finder/releases/latest/download/Noaty-Kill-Finder-Windows-v1.3.2.zip)
 
 **Download ZIP → Extract all → Open Noaty Kill Finder.exe.**
 
@@ -64,7 +64,7 @@ The `imageio-ffmpeg` dependency can provide FFmpeg for source installations. The
 .venv\Scripts\python build_windows.py
 ```
 
-Output: `dist/Noaty-Kill-Finder-Windows-v1.3.1.zip`. Building is supported on Windows. The included tests cover synthetic sound and notification detection, multi-track selection, and video export. Public builds are unsigned.
+Output: `dist/Noaty-Kill-Finder-Windows-v1.3.2.zip`. Building is supported on Windows. The included tests cover synthetic sound and notification detection, multi-track selection, and video export. Public builds are unsigned.
 
 ## Privacy
 

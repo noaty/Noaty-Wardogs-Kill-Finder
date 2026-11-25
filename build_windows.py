@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 
 if sys.platform != "win32":
     raise SystemExit("Build on Windows with Python 3.12 (64-bit).")
@@ -25,6 +25,8 @@ import ssl
 # Keep it alongside frozen ssl.py; never bypass certificate verification.
 datas = [(r"'''
     + str(ROOT / "template.png")
+    + '''", '.'), (r"'''
+    + str(ROOT / "killfinder.ico")
     + '''", '.')]
 policy = Path(ssl.__file__).with_name('codex-rejected-cas.pem')
 if policy.is_file():
@@ -46,6 +48,7 @@ a.binaries = [x for x in a.binaries if not standalone_ffmpeg(x)]
 a.datas = [x for x in a.datas if not standalone_ffmpeg(x)]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='Noaty Kill Finder',
+          icon=str(Path(SPECPATH).parent / 'killfinder.ico'),
           debug=False, bootloader_ignore_signals=False, strip=False, upx=False, console=False)
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='Noaty Kill Finder')
 """,
@@ -105,4 +108,3 @@ archive = Path(
 checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
 archive.with_suffix(".sha256").write_text(f"{checksum}  {archive.name}\n", encoding="utf-8")
 print(f"Built {archive.name} ({archive.stat().st_size // 1024 // 1024} MiB)")
-
